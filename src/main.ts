@@ -13,7 +13,10 @@ async function bootstrap() {
     }),
   );
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: [
+      'http://localhost:5173',
+      'https://designervanessaximenes.vercel.app',
+    ],
     credentials: true,
     methods: 'GET,POST,PUT,DELETE',
   });
