@@ -1,54 +1,56 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma, User } from '@prisma/client';
+import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import { UserEntity } from './entities/user.entity';
+import { Repository } from 'typeorm';
+import { UpdateUserDTO } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async create(criarUsuario: CreateUserDto): Promise<User> {
-    const data: Prisma.UserCreateInput = {
-      ...criarUsuario,
-      password: await bcrypt.hash(criarUsuario.password, 10),
-    };
-
-    const usuarioCriado = await this.prisma.user.create({ data });
-
-    return {
-      ...usuarioCriado,
-      password: undefined,
-    };
-  }
+  constructor(
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
+  ) {}
 
   async findAll() {
-    const usuarios = await this.prisma.user.findMany();
+    const users = await this.userRepository.find();
+
     return {
-      ...usuarios,
-      password: undefined,
+      ...users,
     };
   }
 
-  findByEmail(email: string) {
-    return this.prisma.user.findUnique({ where: { email } });
+  async createUser(userEntity: UserEntity) {
+    const data = {
+      ...userEntity,
+      password: await bcrypt.hash(userEntity.password, 10),
+    };
+    const userCreated = await this.userRepository.save(data);
+    return { ...userCreated, password: undefined };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  async remove(id: number) {
-    const deletarUsuario = await this.prisma.user.delete({
-      where: {
-        id: id,
-      },
+  async findByEmail(email: string) {
+    const checkEmail = await this.userRepository.findOne({
+      where: { email },
     });
-    return `Usuario de ID: ${id} deletado com sucesso.`;
+    return checkEmail;
+  }
+
+  async findOne(id: number) {
+    const returnUser = await this.userRepository.findOne({
+      where: { id },
+    });
+
+    return returnUser;
+  }
+
+  async updateuser(id: string, data: UpdateUserDTO) {
+    await this.userRepository.update(id, data);
+    return 'Usuário atualizado com sucesso.';
+  }
+
+  async deleteUser(id: string) {
+    await this.userRepository.delete(id);
+    return 'Usuário deletado com sucesso.';
   }
 }

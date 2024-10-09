@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { PrismaModule } from 'src/prisma/prisma.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserEntity } from './entities/user.entity';
+import { EmailUniqueValidator } from './middleware/email-is-unique.validator';
 
 @Module({
   controllers: [UserController],
-  providers: [UserService],
+  providers: [UserService, EmailUniqueValidator],
   exports: [UserService],
-  imports: [PrismaModule],
+  imports: [TypeOrmModule.forFeature([UserEntity])],
 })
 export class UserModule {}
